@@ -10,6 +10,15 @@ import { detectAgent } from "./detect/engine.js";
 import { appendRecord } from "./scan/store.js";
 import { generateAuditReport, exportJson, exportCsv, exportSbom, exportHtml } from "./export/formats.js";
 
+function requireGitRepo(): void {
+  try {
+    execFileSync("git", ["rev-parse", "--git-dir"], { encoding: "utf-8", stdio: "pipe" });
+  } catch {
+    console.error("Not a git repository. Run this command inside a git repo.");
+    process.exit(1);
+  }
+}
+
 const program = new Command();
 
 program
@@ -27,6 +36,7 @@ program
   .option("--format <format>", "Output format: text, json, html", "text")
   .option("-o, --output <file>", "Write to file instead of stdout")
   .action((opts) => {
+    requireGitRepo();
     console.log("Scanning git history for AI-authored commits...\n");
     const result = scanHistory(opts.since, opts.path);
 
@@ -106,6 +116,7 @@ program
   .command("stats")
   .description("Show summary statistics of AI-authored code")
   .action(() => {
+    requireGitRepo();
     const stats = computeStats();
 
     if (stats.totalCommits === 0) {
@@ -143,6 +154,7 @@ program
   .option("--agent <agent>", "Filter by agent (claude-code, cursor, copilot, devin, aider)")
   .option("--since <duration>", "Filter by time (e.g., 90d, 6m, 2024-01-01)")
   .action((opts) => {
+    requireGitRepo();
     const records = queryRecords(opts);
 
     if (records.length === 0) {
@@ -168,6 +180,7 @@ program
   .command("forensics <hash>")
   .description("Show full provenance record for a commit")
   .action((hash: string) => {
+    requireGitRepo();
     const record = forensics(hash);
 
     if (!record) {
@@ -274,6 +287,7 @@ program
   .description("Install git hooks, initialize tracking, and scan history")
   .option("--no-scan", "Skip the initial history scan")
   .action((opts: { scan: boolean }) => {
+    requireGitRepo();
     const { installed, skipped } = installHooks();
     ensureStoreExists();
 
@@ -307,8 +321,18 @@ program
   .description("Start the CodeGov collector server (OTEL + webhook + dashboard)")
   .option("-p, --port <port>", "Port to listen on", "4318")
   .action(async (opts: { port: string }) => {
-    const { startServer } = await import("./server/index.js");
-    startServer(parseInt(opts.port, 10));
+    try {
+      const { startServer } = await import("./server/index.js");
+      startServer(parseInt(opts.port, 10));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("better-sqlite3") || msg.includes("express")) {
+        console.error("The server requires additional dependencies.");
+        console.error("Run: npm install better-sqlite3 express");
+        process.exit(1);
+      }
+      throw err;
+    }
   });
 
 // ── Internal command (used by git hook) ─────────────────────────────
@@ -317,6 +341,7 @@ program
   .command("record-commit <ref>")
   .description("Record provenance for a single commit (used by git hook)")
   .action((ref: string) => {
+    requireGitRepo();
     const commit = getCommitDetail(ref);
     if (!commit) {
       process.exit(1);
@@ -341,5 +366,10 @@ program
       });
     }
   });
+
+// Default to scan when no subcommand given
+if (process.argv.length <= 2) {
+  process.argv.push("scan");
+}
 
 program.parse();

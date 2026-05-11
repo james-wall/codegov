@@ -107,7 +107,14 @@ function detectCursor(commit: CommitInfo): DetectorResult {
     confidence = 0.95;
   }
 
-  if (fullText.match(/Co-[Aa]uthored-[Bb]y:\s*Cursor Agent\s*<cursoragent@cursor\.com>/i)) {
+  // Direct authorship: Cursor Agent <cursoragent@cursor.com>
+  if (commit.email === "cursoragent@cursor.com" || commit.author === "Cursor Agent") {
+    signals.push("cursor-agent-author");
+    confidence = Math.max(confidence, 0.95);
+  }
+
+  // Co-author patterns (multiple formats seen in the wild)
+  if (fullText.match(/Co-[Aa]uthored-[Bb]y:\s*(?:Cursor|Cursor Agent)\s*<cursoragent@cursor\.com>/i)) {
     signals.push("cursor-agent-co-author");
     confidence = Math.max(confidence, 0.95);
   }
