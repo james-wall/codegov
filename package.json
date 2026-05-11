@@ -11,7 +11,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/cli.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "tsc"
   },
   "keywords": ["ai", "governance", "provenance", "telemetry", "copilot", "cursor", "claude"],
   "author": "James Wall",
