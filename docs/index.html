@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CodeGov - Open source CLI that detects AI-authored commits in your codebase. Zero config, works on any repo.">
+    <title>CodeGov - Detect AI-Authored Commits</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        header {
+            padding: 48px 0 32px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f0883e;
+            letter-spacing: -0.5px;
+        }
+
+        .header-links {
+            display: flex;
+            gap: 24px;
+            font-size: 14px;
+        }
+
+        .header-links a {
+            color: #58a6ff;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .header-links a:hover {
+            color: #79c0ff;
+        }
+
+        section {
+            padding: 64px 0;
+            border-bottom: 1px solid #30363d;
+        }
+
+        section:last-of-type {
+            border-bottom: none;
+        }
+
+        h1, h2 {
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+        }
+
+        h1 {
+            font-size: 48px;
+            line-height: 1.2;
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            font-size: 32px;
+            margin-bottom: 32px;
+        }
+
+        h3 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: #c9d1d9;
+        }
+
+        p {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #8b949e;
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: #8b949e;
+            margin-bottom: 48px;
+            line-height: 1.4;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 64px 0 48px;
+            border-bottom: none;
+        }
+
+        .terminal-block {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 24px;
+            margin: 32px 0;
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #c9d1d9;
+            overflow-x: auto;
+        }
+
+        .terminal-block .prompt {
+            color: #58a6ff;
+            user-select: none;
+        }
+
+        .terminal-block .output {
+            color: #79c0ff;
+            margin-top: 8px;
+        }
+
+        .terminal-block .stat {
+            color: #f0883e;
+            font-weight: 500;
+        }
+
+        .terminal-block .agents {
+            color: #8b949e;
+            margin-top: 8px;
+        }
+
+        /* How It Works Section */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 24px;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: #58a6ff;
+        }
+
+        .card h3 {
+            color: #58a6ff;
+            margin-bottom: 12px;
+        }
+
+        .card p {
+            font-size: 14px;
+            color: #8b949e;
+        }
+
+        /* Detection Table */
+        .detection-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+            font-size: 14px;
+        }
+
+        .detection-table th {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #58a6ff;
+        }
+
+        .detection-table td {
+            border: 1px solid #30363d;
+            padding: 12px 16px;
+            color: #c9d1d9;
+        }
+
+        .detection-table tr:hover td {
+            background-color: #0d1117;
+        }
+
+        .agent-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            margin-right: 8px;
+        }
+
+        .claude-code {
+            background-color: #1a1a2e;
+            color: #d4a574;
+            border: 1px solid #3a3a4e;
+        }
+
+        .cursor {
+            background-color: #1a2e1a;
+            color: #7bc97b;
+            border: 1px solid #3a5e3a;
+        }
+
+        .copilot {
+            background-color: #1a2e2e;
+            color: #79c0ff;
+            border: 1px solid #3a5e5e;
+        }
+
+        .devin {
+            background-color: #2e1a2e;
+            color: #d2a8ff;
+            border: 1px solid #5e3a5e;
+        }
+
+        .aider {
+            background-color: #2e2e1a;
+            color: #e3b341;
+            border: 1px solid #5e5e3a;
+        }
+
+        .signal {
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 12px;
+            color: #8b949e;
+        }
+
+        /* OSS Results Section */
+        .oss-results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+            font-size: 14px;
+        }
+
+        .oss-results-table th {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #58a6ff;
+        }
+
+        .oss-results-table td {
+            border: 1px solid #30363d;
+            padding: 12px 16px;
+            color: #c9d1d9;
+        }
+
+        .oss-results-table tr:hover td {
+            background-color: #0d1117;
+        }
+
+        .repo-name {
+            color: #58a6ff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .repo-name:hover {
+            text-decoration: underline;
+        }
+
+        .percentage {
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .commits-count {
+            text-align: right;
+            color: #8b949e;
+            font-size: 13px;
+        }
+
+        /* Quickstart Section */
+        .commands {
+            display: grid;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .command {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 13px;
+            color: #c9d1d9;
+        }
+
+        .command-title {
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .command-prompt {
+            color: #58a6ff;
+            user-select: none;
+        }
+
+        /* Installation section text */
+        .install-text {
+            color: #8b949e;
+            margin-bottom: 24px;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        footer {
+            padding: 48px 0;
+            border-top: 1px solid #30363d;
+            text-align: center;
+            color: #8b949e;
+            font-size: 14px;
+        }
+
+        .footer-links {
+            margin-bottom: 16px;
+        }
+
+        .footer-links a {
+            color: #58a6ff;
+            text-decoration: none;
+            margin: 0 16px;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        .license {
+            color: #6e7681;
+            font-size: 13px;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 32px;
+            }
+
+            h2 {
+                font-size: 24px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .header-links {
+                gap: 16px;
+                font-size: 13px;
+            }
+
+            .detection-table,
+            .oss-results-table {
+                font-size: 12px;
+            }
+
+            .detection-table th,
+            .detection-table td,
+            .oss-results-table th,
+            .oss-results-table td {
+                padding: 8px 12px;
+            }
+
+            .terminal-block {
+                font-size: 11px;
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">CodeGov</div>
+                <div class="header-links">
+                    <a href="#how-it-works">How it works</a>
+                    <a href="#detection">Detection</a>
+                    <a href="#install">Install</a>
+                    <a href="https://github.com/james-wall/codegov" target="_blank" rel="noopener noreferrer">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <h1>Know what AI wrote in your codebase</h1>
+                <p class="subtitle">Open source CLI that scans git history and detects AI-authored commits. Zero configuration, works on any repository.</p>
+
+                <div class="terminal-block">
+                    <div><span class="prompt">$</span> npx codegov scan</div>
+                    <div class="output" style="margin-top: 12px;"><span class="stat">82.3%</span> of commits are AI-authored <span class="stat">(283/344)</span></div>
+                    <div class="agents">Agents: <span class="stat">280 claude-code</span>, <span class="stat">2 copilot</span>, <span class="stat">1 cursor</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section id="how-it-works">
+            <div class="container">
+                <h2>How it works</h2>
+                <div class="cards">
+                    <div class="card">
+                        <h3>Scan</h3>
+                        <p>Run the CLI once. Zero configuration required. Analyzes git metadata and commit messages to detect authorship patterns.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Attribute</h3>
+                        <p>Identifies 5 major AI tools: Claude Code, Cursor, GitHub Copilot, Devin, and Aider with high precision.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Export</h3>
+                        <p>Generate detailed reports in HTML, CSV, or SBOM formats. Share with your team or integrate into tooling.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detection Section -->
+        <section id="detection">
+            <div class="container">
+                <h2>Detection signals</h2>
+                <p style="color: #8b949e; margin-bottom: 24px;">CodeGov matches against documented commit metadata patterns from each tool:</p>
+                <table class="detection-table">
+                    <thead>
+                        <tr>
+                            <th>Tool</th>
+                            <th>Signals</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="agent-badge claude-code">Claude Code</span></td>
+                            <td><span class="signal">Co-Authored-By: Claude &lt;noreply@anthropic.com&gt;</span>, <span class="signal">Generated by Claude Code</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="agent-badge cursor">Cursor</span></td>
+                            <td><span class="signal">cursoragent@cursor.com</span> author, <span class="signal">cursor[bot]</span> author, <span class="signal">Made-with: Cursor</span> trailer</td>
+                        </tr>
+                        <tr>
+                            <td><span class="agent-badge copilot">GitHub Copilot</span></td>
+                            <td><span class="signal">copilot@github.com</span> co-author, <span class="signal">copilot-swe-agent[bot]</span> author, <span class="signal">Agent-Logs-Url</span> trailer</td>
+                        </tr>
+                        <tr>
+                            <td><span class="agent-badge devin">Devin</span></td>
+                            <td><span class="signal">devin-ai-integration[bot]</span> author email, <span class="signal">Devin AI</span> author name</td>
+                        </tr>
+                        <tr>
+                            <td><span class="agent-badge aider">Aider</span></td>
+                            <td><span class="signal">aider (model) &lt;aider@aider.chat&gt;</span> co-author, <span class="signal">aider:</span> message prefix</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Open Source Results Section -->
+        <section id="oss-results">
+            <div class="container">
+                <h2>Open source scan results</h2>
+                <p style="color: #8b949e; margin-bottom: 24px;">Scanned May 2026. Last 6 months of commit history from each repository.</p>
+                <div id="oss-results">
+                    <table class="oss-results-table">
+                        <thead>
+                            <tr>
+                                <th>Repository</th>
+                                <th class="commits-count">Commits</th>
+                                <th class="commits-count">AI-Authored</th>
+                                <th class="percentage">%</th>
+                                <th>Top Agent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/aider-chat/aider" target="_blank" rel="noopener noreferrer">aider-chat/aider</a></td>
+                                <td class="commits-count">99</td>
+                                <td class="commits-count">34</td>
+                                <td class="percentage">34.3%</td>
+                                <td><span class="agent-badge aider">Aider</span> 33</td>
+                            </tr>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/tailwindlabs/tailwindcss" target="_blank" rel="noopener noreferrer">tailwindlabs/tailwindcss</a></td>
+                                <td class="commits-count">200</td>
+                                <td class="commits-count">36</td>
+                                <td class="percentage">18.0%</td>
+                                <td><span class="agent-badge claude-code">Claude Code</span> 10</td>
+                            </tr>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/microsoft/vscode" target="_blank" rel="noopener noreferrer">microsoft/vscode</a></td>
+                                <td class="commits-count">11,964</td>
+                                <td class="commits-count">1,941</td>
+                                <td class="percentage">16.2%</td>
+                                <td><span class="agent-badge copilot">Copilot</span> 1,858</td>
+                            </tr>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/supabase/supabase" target="_blank" rel="noopener noreferrer">supabase/supabase</a></td>
+                                <td class="commits-count">200</td>
+                                <td class="commits-count">28</td>
+                                <td class="percentage">14.0%</td>
+                                <td><span class="agent-badge claude-code">Claude Code</span> 14</td>
+                            </tr>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/vercel/next.js" target="_blank" rel="noopener noreferrer">vercel/next.js</a></td>
+                                <td class="commits-count">200</td>
+                                <td class="commits-count">24</td>
+                                <td class="percentage">12.0%</td>
+                                <td><span class="agent-badge claude-code">Claude Code</span> 14, <span class="agent-badge cursor">Cursor</span> 2, <span class="agent-badge copilot">Copilot</span> 1</td>
+                            </tr>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/anthropics/anthropic-sdk-python" target="_blank" rel="noopener noreferrer">anthropics/anthropic-sdk-python</a></td>
+                                <td class="commits-count">193</td>
+                                <td class="commits-count">10</td>
+                                <td class="percentage">5.2%</td>
+                                <td><span class="agent-badge claude-code">Claude Code</span> 3</td>
+                            </tr>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/openai/openai-python" target="_blank" rel="noopener noreferrer">openai/openai-python</a></td>
+                                <td class="commits-count">194</td>
+                                <td class="commits-count">10</td>
+                                <td class="percentage">5.2%</td>
+                                <td>unknown-ai 10</td>
+                            </tr>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/langchain-ai/langchain" target="_blank" rel="noopener noreferrer">langchain-ai/langchain</a></td>
+                                <td class="commits-count">200</td>
+                                <td class="commits-count">7</td>
+                                <td class="percentage">3.5%</td>
+                                <td><span class="agent-badge claude-code">Claude Code</span> 2</td>
+                            </tr>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/facebook/react" target="_blank" rel="noopener noreferrer">facebook/react</a></td>
+                                <td class="commits-count">200</td>
+                                <td class="commits-count">5</td>
+                                <td class="percentage">2.5%</td>
+                                <td>unknown-ai 5</td>
+                            </tr>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/nodejs/node" target="_blank" rel="noopener noreferrer">nodejs/node</a></td>
+                                <td class="commits-count">200</td>
+                                <td class="commits-count">5</td>
+                                <td class="percentage">2.5%</td>
+                                <td><span class="agent-badge claude-code">Claude Code</span> 1</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Install & Quickstart Section -->
+        <section id="install">
+            <div class="container">
+                <h2>Install & quickstart</h2>
+                <p class="install-text">CodeGov is a single Node.js CLI with no external dependencies. Install globally or run via npx.</p>
+
+                <div class="commands">
+                    <div>
+                        <div class="command-title">Scan a repository</div>
+                        <div class="command">
+                            <span class="command-prompt">$</span> npx codegov scan
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="command-title">Generate HTML report</div>
+                        <div class="command">
+                            <span class="command-prompt">$</span> npx codegov export --format html
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="command-title">Export CSV for spreadsheets</div>
+                        <div class="command">
+                            <span class="command-prompt">$</span> npx codegov export --format csv -o report.csv
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="command-title">SPDX 2.3 compliance artifact</div>
+                        <div class="command">
+                            <span class="command-prompt">$</span> npx codegov export --format sbom -o provenance.json
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="command-title">Install globally</div>
+                        <div class="command">
+                            <span class="command-prompt">$</span> npm install -g codegov
+                        </div>
+                    </div>
+                </div>
+
+                <p style="color: #8b949e; margin-top: 32px; font-size: 14px;">See the <a href="https://github.com/james-wall/codegov" target="_blank" rel="noopener noreferrer" style="color: #58a6ff; text-decoration: none;">GitHub repository</a> for advanced options, configuration, and API documentation.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/james-wall/codegov" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="https://github.com/james-wall/codegov/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>
+            </div>
+            <div class="license">CodeGov is open source and free to use.</div>
+        </div>
+    </footer>
+</body>
+</html>
