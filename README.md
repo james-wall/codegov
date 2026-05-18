@@ -5,7 +5,7 @@ Know what AI wrote in your codebase.
 CodeGov scans your git history and detects commits authored by AI coding tools — Claude Code, Cursor, GitHub Copilot, Devin, and Aider — from git metadata alone. No config, no API keys, no agents to install.
 
 ```
-$ npx codegov scan
+$ npx @james-wall/codegov scan
 
 82.3% of commits are AI-authored (283/344)
 Agents: 280 claude-code, 2 copilot, 1 cursor
@@ -20,8 +20,8 @@ Detected commits:
 ## Install
 
 ```bash
-npx codegov scan          # try it now, no install needed
-npm install -g codegov    # or install globally
+npx @james-wall/codegov scan       # try it now, no install needed
+npm install -g @james-wall/codegov # or install globally
 ```
 
 ## Commands
