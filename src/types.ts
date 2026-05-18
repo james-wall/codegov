@@ -29,6 +29,7 @@ export interface ScanResult {
   aiCommits: number;
   newRecords: number;
   records: ProvenanceRecord[];
+  allInRange: ProvenanceRecord[];
 }
 
 export interface StatsResult {

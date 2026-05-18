@@ -68,9 +68,9 @@ program
 
     const pct = ((result.aiCommits / result.totalCommits) * 100).toFixed(1);
 
-    // Agent breakdown from all stored records (includes new ones just appended)
+    // Agent breakdown from records in the scan window only
     const agentCounts: Record<string, number> = {};
-    for (const r of readRecords()) {
+    for (const r of result.allInRange) {
       agentCounts[r.agentId] = (agentCounts[r.agentId] || 0) + 1;
     }
 

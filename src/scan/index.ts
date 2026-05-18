@@ -5,11 +5,17 @@ import { appendRecord, readRecords } from "./store.js";
 
 export function scanHistory(since?: string, path?: string): ScanResult {
   const commits = getCommitLog(since, path);
-  const existing = new Set(readRecords().map(r => r.commitHash));
+  const commitHashes = new Set(commits.map(c => c.hash));
+  const existingRecords = readRecords();
+  const existingHashes = new Set(existingRecords.map(r => r.commitHash));
+
+  // Count existing records that fall within the current scan window
+  const existingInRange = existingRecords.filter(r => commitHashes.has(r.commitHash)).length;
+
   const records: ProvenanceRecord[] = [];
 
   for (const commit of commits) {
-    if (existing.has(commit.hash)) continue;
+    if (existingHashes.has(commit.hash)) continue;
 
     const detection = detectAgent(commit);
     if (detection.confidence > 0.3) {
@@ -32,11 +38,18 @@ export function scanHistory(since?: string, path?: string): ScanResult {
     }
   }
 
+  // Collect all AI records in the scan window (new + previously stored)
+  const allInRange = [
+    ...records,
+    ...existingRecords.filter(r => commitHashes.has(r.commitHash)),
+  ];
+
   return {
     totalCommits: commits.length,
-    aiCommits: records.length + existing.size,
+    aiCommits: allInRange.length,
     newRecords: records.length,
     records,
+    allInRange,
   };
 }
 
