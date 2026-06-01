@@ -1,6 +1,6 @@
 {
   "name": "@james-wall/codegov",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "AI code governance — attribution, telemetry, and ROI for AI-assisted development",
   "type": "module",
   "main": "dist/cli.js",

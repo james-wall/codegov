@@ -112,9 +112,9 @@ export function correlateCommit(commitHash: string, windowMinutes = DEFAULT_WIND
       SELECT id, tool, developer, file_path FROM tool_events
       WHERE developer = ?
         AND file_path = ?
-        AND datetime(timestamp) BETWEEN datetime(?, '-${windowMinutes} minutes') AND datetime(?)
+        AND datetime(timestamp) BETWEEN datetime(?, ?) AND datetime(?)
       ORDER BY timestamp DESC
-    `).all(commit.author, file.file_path, commit.timestamp, commit.timestamp) as Array<{
+    `).all(commit.author, file.file_path, commit.timestamp, `-${windowMinutes} minutes`, commit.timestamp) as Array<{
       id: number; tool: string; developer: string; file_path: string;
     }>;
 

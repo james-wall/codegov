@@ -1,16 +1,18 @@
 import { getCommitLog, getCommitDetail } from "../git/parser.js";
-import { detectAgent } from "../detect/engine.js";
+import { detectAgent, isBrandedAgent } from "../detect/engine.js";
 import { ProvenanceRecord, ScanResult, StatsResult } from "../types.js";
 import { appendRecord, readRecords } from "./store.js";
 
-export function scanHistory(since?: string, path?: string): ScanResult {
-  const commits = getCommitLog(since, path);
+export function scanHistory(
+  since?: string,
+  path?: string,
+  opts: { includeGeneric?: boolean; noStat?: boolean } = {}
+): ScanResult {
+  const includeGeneric = opts.includeGeneric ?? false;
+  const commits = getCommitLog({ since, path, noStat: opts.noStat });
   const commitHashes = new Set(commits.map(c => c.hash));
   const existingRecords = readRecords();
   const existingHashes = new Set(existingRecords.map(r => r.commitHash));
-
-  // Count existing records that fall within the current scan window
-  const existingInRange = existingRecords.filter(r => commitHashes.has(r.commitHash)).length;
 
   const records: ProvenanceRecord[] = [];
 
@@ -18,7 +20,12 @@ export function scanHistory(since?: string, path?: string): ScanResult {
     if (existingHashes.has(commit.hash)) continue;
 
     const detection = detectAgent(commit);
-    if (detection.confidence > 0.3) {
+    // Persist only what we count: branded tools always; generic ("unknown-ai")
+    // only when explicitly opted in via --include-generic.
+    if (
+      detection.confidence > 0.3 &&
+      (isBrandedAgent(detection.agentId) || includeGeneric)
+    ) {
       const record: ProvenanceRecord = {
         commitHash: commit.hash,
         timestamp: commit.timestamp,
@@ -38,10 +45,16 @@ export function scanHistory(since?: string, path?: string): ScanResult {
     }
   }
 
-  // Collect all AI records in the scan window (new + previously stored)
+  // All AI records in the scan window (new + previously stored), filtered to the
+  // same count policy so a pre-existing store containing generic hits can't
+  // inflate the default branded-only headline.
   const allInRange = [
     ...records,
-    ...existingRecords.filter(r => commitHashes.has(r.commitHash)),
+    ...existingRecords.filter(
+      r =>
+        commitHashes.has(r.commitHash) &&
+        (isBrandedAgent(r.agentId) || includeGeneric)
+    ),
   ];
 
   return {
@@ -77,9 +90,20 @@ export function forensics(hash: string): ProvenanceRecord | null {
   };
 }
 
-export function computeStats(): StatsResult {
-  const records = readRecords();
+export function computeStats(opts: { includeGeneric?: boolean } = {}): StatsResult {
+  const includeGeneric = opts.includeGeneric ?? false;
   const commits = getCommitLog();
+  const commitHashes = new Set(commits.map(c => c.hash));
+
+  // Scope stored records to commits actually reachable from HEAD (and to the
+  // count policy). Without the reachability filter, records from other branches
+  // or earlier path-scoped scans could exceed the commit count and push the
+  // percentage over 100%.
+  const records = readRecords().filter(
+    r =>
+      commitHashes.has(r.commitHash) &&
+      (isBrandedAgent(r.agentId) || includeGeneric)
+  );
 
   const byAgent: Record<string, number> = {};
   const byMonth: Record<string, { total: number; ai: number }> = {};

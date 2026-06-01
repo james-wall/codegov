@@ -64,6 +64,8 @@ CodeGov identifies AI-authored commits by matching patterns in git metadata:
 
 Each detection carries a confidence score (0-100%). The threshold is 30% — anything below is classified as human-authored.
 
+Only the five named tools above are counted by default — each is matched on a specific, documented signature, so false positives are rare. A low-signal "generic AI" heuristic (e.g. an `<ai@…>` co-author with no specific tool) is available behind `codegov scan --include-generic`, but it is **off by default** to keep the headline number trustworthy. Detection reads commit metadata only, so the percentage is a floor: AI-assisted commits that carry no signature are not counted.
+
 ## Export formats
 
 - **JSON** — full audit report with summary + all records

@@ -6,9 +6,10 @@ import { installHooks } from "./git/hooks.js";
 import { scanHistory, forensics, computeStats } from "./scan/index.js";
 import { queryRecords, readRecords, ensureStoreExists } from "./scan/store.js";
 import { getCommitDetail } from "./git/parser.js";
-import { detectAgent } from "./detect/engine.js";
+import { detectAgent, isBrandedAgent } from "./detect/engine.js";
 import { appendRecord } from "./scan/store.js";
 import { generateAuditReport, exportJson, exportCsv, exportSbom, exportHtml } from "./export/formats.js";
+import { VERSION } from "./version.js";
 
 function requireGitRepo(): void {
   try {
@@ -24,7 +25,7 @@ const program = new Command();
 program
   .name("codegov")
   .description("AI code governance — attribution, telemetry, and ROI for AI-assisted development")
-  .version("0.1.0");
+  .version(VERSION);
 
 // ── Zero-config commands (no server, no SQLite) ─────────────────────
 
@@ -34,14 +35,19 @@ program
   .option("--since <duration>", "Time period to scan (e.g., 90d, 6m)")
   .option("--path <path>", "Limit scan to a specific path")
   .option("--format <format>", "Output format: text, json, html", "text")
+  .option("--include-generic", "Also count generic/unknown-AI co-author hints (noisier, off by default)")
+  .option("--no-stat", "Skip per-commit line diffs (much faster on large or blobless repos)")
   .option("-o, --output <file>", "Write to file instead of stdout")
   .action((opts) => {
     requireGitRepo();
     console.log("Scanning git history for AI-authored commits...\n");
-    const result = scanHistory(opts.since, opts.path);
+    const result = scanHistory(opts.since, opts.path, {
+      includeGeneric: opts.includeGeneric,
+      noStat: opts.stat === false,
+    });
 
     if (opts.format === "json") {
-      const report = generateAuditReport(opts.since);
+      const report = generateAuditReport(opts.since, { includeGeneric: opts.includeGeneric });
       const output = exportJson(report);
       if (opts.output) {
         writeFileSync(opts.output, output);
@@ -53,7 +59,7 @@ program
     }
 
     if (opts.format === "html") {
-      const report = generateAuditReport(opts.since);
+      const report = generateAuditReport(opts.since, { includeGeneric: opts.includeGeneric });
       const output = exportHtml(report);
       const file = opts.output ?? "codegov-report.html";
       writeFileSync(file, output);
@@ -115,9 +121,10 @@ program
 program
   .command("stats")
   .description("Show summary statistics of AI-authored code")
-  .action(() => {
+  .option("--include-generic", "Also count generic/unknown-AI co-author hints (noisier, off by default)")
+  .action((opts: { includeGeneric?: boolean }) => {
     requireGitRepo();
-    const stats = computeStats();
+    const stats = computeStats({ includeGeneric: opts.includeGeneric });
 
     if (stats.totalCommits === 0) {
       console.log("No commit history found. Run 'codegov scan' first.");
@@ -215,9 +222,11 @@ program
   .description("Export audit report in various formats")
   .option("--format <format>", "Output format: json, csv, sbom, html", "json")
   .option("--since <duration>", "Filter by time period")
+  .option("--include-generic", "Also count generic/unknown-AI co-author hints (noisier, off by default)")
   .option("-o, --output <file>", "Write to file instead of stdout")
-  .action((opts: { format: string; since?: string; output?: string }) => {
-    const report = generateAuditReport(opts.since);
+  .action((opts: { format: string; since?: string; output?: string; includeGeneric?: boolean }) => {
+    requireGitRepo();
+    const report = generateAuditReport(opts.since, { includeGeneric: opts.includeGeneric });
 
     let output: string;
     switch (opts.format) {
@@ -251,6 +260,7 @@ program
   .option("--since <duration>", "Filter by time period")
   .option("--public", "Make the Gist public (default: secret)")
   .action((opts: { since?: string; public?: boolean }) => {
+    requireGitRepo();
     const report = generateAuditReport(opts.since);
     const html = exportHtml(report);
 
@@ -348,7 +358,7 @@ program
     }
 
     const detection = detectAgent(commit);
-    if (detection.confidence > 0.3) {
+    if (detection.confidence > 0.3 && isBrandedAgent(detection.agentId)) {
       ensureStoreExists();
       appendRecord({
         commitHash: commit.hash,

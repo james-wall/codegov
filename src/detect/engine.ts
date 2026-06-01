@@ -1,5 +1,20 @@
 import { AgentId } from "../types.js";
 
+// The five tools we detect from specific, documented metadata signatures.
+// "unknown-ai" (generic co-author/body hints) is deliberately NOT in this set:
+// it is low-signal and excluded from headline counts unless explicitly opted in.
+export const BRANDED_AGENTS: AgentId[] = [
+  "claude-code",
+  "cursor",
+  "copilot",
+  "devin",
+  "aider",
+];
+
+export function isBrandedAgent(id: AgentId): boolean {
+  return (BRANDED_AGENTS as string[]).includes(id);
+}
+
 interface DetectionResult {
   agentId: AgentId;
   confidence: number;
@@ -276,9 +291,12 @@ function detectGenericAI(commit: CommitInfo): DetectorResult {
     fullText.toLowerCase().includes(bot)
   );
 
+  // Word boundaries + same-line matching only. Without \b, the alternation
+  // matched substrings inside ordinary text — e.g. "ai" inside "gm[ai]l.com",
+  // "hot[mai]l", "Cl[ai]re", "Mikh[ai]l" — flagging human commits as AI.
   if (
     !isNonAiBot &&
-    fullText.match(/Co-[Aa]uthored-[Bb]y:.*(ai|assistant|agent|llm)/i)
+    fullText.match(/Co-[Aa]uthored-[Bb]y:[^\n]*\b(?:ai|assistant|agent|llm)\b/i)
   ) {
     signals.push("generic-ai-co-author");
     confidence = 0.6;
@@ -286,7 +304,7 @@ function detectGenericAI(commit: CommitInfo): DetectorResult {
 
   if (
     commit.body.match(
-      /generated\s+(by|with|using)\s+(an?\s+)?(ai|llm|assistant|agent)/i
+      /generated\s+(?:by|with|using)\s+(?:an?\s+)?\b(?:ai|llm|assistant|agent)\b/i
     )
   ) {
     signals.push("ai-generation-mention-in-body");

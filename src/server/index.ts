@@ -34,7 +34,9 @@ export function startServer(port = PORT): void {
     res.redirect("/dashboard");
   });
 
-  const server = app.listen(port, () => {
+  // Bind to loopback only. The dashboard and ingest endpoints are
+  // unauthenticated; they should not be reachable from the network by default.
+  const server = app.listen(port, "127.0.0.1", () => {
     console.log(`CodeGov server running on http://localhost:${port}`);
     console.log(`  Dashboard:    http://localhost:${port}/dashboard`);
     console.log(`  OTEL traces:  POST http://localhost:${port}/v1/traces`);

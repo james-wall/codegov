@@ -26,15 +26,15 @@ function buildFormat(): string {
 }
 
 export function getCommitLog(
-  since?: string,
-  path?: string,
-  cwd?: string
+  opts: { since?: string; path?: string; cwd?: string; noStat?: boolean } = {}
 ): RawCommit[] {
-  const args = [
-    "log",
-    `--format=${buildFormat()}`,
-    "--numstat",
-  ];
+  const { since, path, cwd, noStat } = opts;
+  const args = ["log", `--format=${buildFormat()}`];
+
+  // --numstat needs file blobs to compute line counts. Skipping it makes scans
+  // dramatically faster on large repos and lets detection run against a
+  // metadata-only (blobless) clone. Line counts are reported as 0 in this mode.
+  if (!noStat) args.push("--numstat");
 
   if (since) {
     args.push(`--since=${expandSince(since)}`);
@@ -111,7 +111,7 @@ export function parseOutput(output: string): RawCommit[] {
   return commits;
 }
 
-function expandSince(since: string): string {
+export function expandSince(since: string): string {
   const match = since.match(/^(\d+)([dhm])$/);
   if (!match) return since;
   const value = match[1];
@@ -131,9 +131,11 @@ export function getCommitDetail(hash: string, cwd?: string): RawCommit | null {
       "log", "-1",
       `--format=${buildFormat()}`,
       "--numstat",
+      "--end-of-options",
       hash,
     ], {
       encoding: "utf-8",
+      maxBuffer: 50 * 1024 * 1024,
       ...(cwd ? { cwd } : {}),
     });
   } catch {

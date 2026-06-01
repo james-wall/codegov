@@ -492,7 +492,7 @@
         <section id="oss-results">
             <div class="container">
                 <h2>Open source scan results</h2>
-                <p style="color: #8b949e; margin-bottom: 24px;">Scanned May 2026. Last 6 months of commit history from each repository.</p>
+                <p style="color: #8b949e; margin-bottom: 24px;">Scanned May 2026 — last 6 months of each repository's default branch, via <code style="background:#161b22;padding:2px 6px;border-radius:4px;font-size:13px;">codegov scan --since 6m</code>. Counts only the five branded tools (specific commit signatures); reproducible with <a href="https://github.com/james-wall/codegov/blob/main/benchmark.sh" target="_blank" rel="noopener noreferrer" style="color:#58a6ff;text-decoration:none;">benchmark.sh</a>.</p>
                 <div id="oss-results">
                     <table class="oss-results-table">
                         <thead>
@@ -501,79 +501,79 @@
                                 <th class="commits-count">Commits</th>
                                 <th class="commits-count">AI-Authored</th>
                                 <th class="percentage">%</th>
-                                <th>Top Agent</th>
+                                <th>Agents</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><a class="repo-name" href="https://github.com/aider-chat/aider" target="_blank" rel="noopener noreferrer">aider-chat/aider</a></td>
-                                <td class="commits-count">99</td>
-                                <td class="commits-count">34</td>
-                                <td class="percentage">34.3%</td>
-                                <td><span class="agent-badge aider">Aider</span> 33</td>
-                            </tr>
-                            <tr>
-                                <td><a class="repo-name" href="https://github.com/tailwindlabs/tailwindcss" target="_blank" rel="noopener noreferrer">tailwindlabs/tailwindcss</a></td>
-                                <td class="commits-count">200</td>
-                                <td class="commits-count">36</td>
-                                <td class="percentage">18.0%</td>
-                                <td><span class="agent-badge claude-code">Claude Code</span> 10</td>
+                                <td><a class="repo-name" href="https://github.com/Aider-AI/aider" target="_blank" rel="noopener noreferrer">Aider-AI/aider</a></td>
+                                <td class="commits-count">86</td>
+                                <td class="commits-count">32</td>
+                                <td class="percentage">37.2%</td>
+                                <td><span class="agent-badge aider">Aider</span> 32</td>
                             </tr>
                             <tr>
                                 <td><a class="repo-name" href="https://github.com/microsoft/vscode" target="_blank" rel="noopener noreferrer">microsoft/vscode</a></td>
-                                <td class="commits-count">11,964</td>
-                                <td class="commits-count">1,941</td>
-                                <td class="percentage">16.2%</td>
-                                <td><span class="agent-badge copilot">Copilot</span> 1,858</td>
-                            </tr>
-                            <tr>
-                                <td><a class="repo-name" href="https://github.com/supabase/supabase" target="_blank" rel="noopener noreferrer">supabase/supabase</a></td>
-                                <td class="commits-count">200</td>
-                                <td class="commits-count">28</td>
-                                <td class="percentage">14.0%</td>
-                                <td><span class="agent-badge claude-code">Claude Code</span> 14</td>
+                                <td class="commits-count">14,588</td>
+                                <td class="commits-count">2,266</td>
+                                <td class="percentage">15.5%</td>
+                                <td><span class="agent-badge copilot">Copilot</span> 2,246, <span class="agent-badge claude-code">Claude Code</span> 15, <span class="agent-badge cursor">Cursor</span> 5</td>
                             </tr>
                             <tr>
                                 <td><a class="repo-name" href="https://github.com/vercel/next.js" target="_blank" rel="noopener noreferrer">vercel/next.js</a></td>
-                                <td class="commits-count">200</td>
-                                <td class="commits-count">24</td>
-                                <td class="percentage">12.0%</td>
-                                <td><span class="agent-badge claude-code">Claude Code</span> 14, <span class="agent-badge cursor">Cursor</span> 2, <span class="agent-badge copilot">Copilot</span> 1</td>
+                                <td class="commits-count">2,258</td>
+                                <td class="commits-count">156</td>
+                                <td class="percentage">6.9%</td>
+                                <td><span class="agent-badge claude-code">Claude Code</span> 106, <span class="agent-badge cursor">Cursor</span> 49, <span class="agent-badge copilot">Copilot</span> 1</td>
+                            </tr>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/supabase/supabase" target="_blank" rel="noopener noreferrer">supabase/supabase</a></td>
+                                <td class="commits-count">2,932</td>
+                                <td class="commits-count">162</td>
+                                <td class="percentage">5.5%</td>
+                                <td><span class="agent-badge claude-code">Claude Code</span> 133, <span class="agent-badge copilot">Copilot</span> 28, <span class="agent-badge cursor">Cursor</span> 1</td>
+                            </tr>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/tailwindlabs/tailwindcss" target="_blank" rel="noopener noreferrer">tailwindlabs/tailwindcss</a></td>
+                                <td class="commits-count">223</td>
+                                <td class="commits-count">10</td>
+                                <td class="percentage">4.5%</td>
+                                <td><span class="agent-badge claude-code">Claude Code</span> 10</td>
                             </tr>
                             <tr>
                                 <td><a class="repo-name" href="https://github.com/anthropics/anthropic-sdk-python" target="_blank" rel="noopener noreferrer">anthropics/anthropic-sdk-python</a></td>
-                                <td class="commits-count">193</td>
-                                <td class="commits-count">10</td>
-                                <td class="percentage">5.2%</td>
-                                <td><span class="agent-badge claude-code">Claude Code</span> 3</td>
-                            </tr>
-                            <tr>
-                                <td><a class="repo-name" href="https://github.com/openai/openai-python" target="_blank" rel="noopener noreferrer">openai/openai-python</a></td>
-                                <td class="commits-count">194</td>
-                                <td class="commits-count">10</td>
-                                <td class="percentage">5.2%</td>
-                                <td>unknown-ai 10</td>
+                                <td class="commits-count">198</td>
+                                <td class="commits-count">4</td>
+                                <td class="percentage">2.0%</td>
+                                <td><span class="agent-badge claude-code">Claude Code</span> 4</td>
                             </tr>
                             <tr>
                                 <td><a class="repo-name" href="https://github.com/langchain-ai/langchain" target="_blank" rel="noopener noreferrer">langchain-ai/langchain</a></td>
-                                <td class="commits-count">200</td>
-                                <td class="commits-count">7</td>
-                                <td class="percentage">3.5%</td>
-                                <td><span class="agent-badge claude-code">Claude Code</span> 2</td>
-                            </tr>
-                            <tr>
-                                <td><a class="repo-name" href="https://github.com/facebook/react" target="_blank" rel="noopener noreferrer">facebook/react</a></td>
-                                <td class="commits-count">200</td>
-                                <td class="commits-count">5</td>
-                                <td class="percentage">2.5%</td>
-                                <td>unknown-ai 5</td>
+                                <td class="commits-count">1,244</td>
+                                <td class="commits-count">12</td>
+                                <td class="percentage">1.0%</td>
+                                <td><span class="agent-badge claude-code">Claude Code</span> 10, <span class="agent-badge copilot">Copilot</span> 2</td>
                             </tr>
                             <tr>
                                 <td><a class="repo-name" href="https://github.com/nodejs/node" target="_blank" rel="noopener noreferrer">nodejs/node</a></td>
-                                <td class="commits-count">200</td>
-                                <td class="commits-count">5</td>
-                                <td class="percentage">2.5%</td>
-                                <td><span class="agent-badge claude-code">Claude Code</span> 1</td>
+                                <td class="commits-count">1,405</td>
+                                <td class="commits-count">8</td>
+                                <td class="percentage">0.6%</td>
+                                <td><span class="agent-badge claude-code">Claude Code</span> 8</td>
+                            </tr>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/facebook/react" target="_blank" rel="noopener noreferrer">facebook/react</a></td>
+                                <td class="commits-count">282</td>
+                                <td class="commits-count">0</td>
+                                <td class="percentage">0.0%</td>
+                                <td>—</td>
+                            </tr>
+                            <tr>
+                                <td><a class="repo-name" href="https://github.com/openai/openai-python" target="_blank" rel="noopener noreferrer">openai/openai-python</a></td>
+                                <td class="commits-count">212</td>
+                                <td class="commits-count">0</td>
+                                <td class="percentage">0.0%</td>
+                                <td>—</td>
                             </tr>
                         </tbody>
                     </table>
@@ -585,7 +585,7 @@
         <section id="install">
             <div class="container">
                 <h2>Install & quickstart</h2>
-                <p class="install-text">CodeGov is a single Node.js CLI with no external dependencies. Install globally or run via npx.</p>
+                <p class="install-text">CodeGov is a small Node.js CLI with a minimal dependency footprint — no native dependencies on the scan path. Install globally or run via npx.</p>
 
                 <div class="commands">
                     <div>
