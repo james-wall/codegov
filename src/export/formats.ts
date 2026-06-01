@@ -105,7 +105,7 @@ export function exportSbom(report: AuditReport): string {
     name: `ai-provenance-${report.repository}`,
     documentNamespace: `https://codegov.dev/spdx/${report.repository}/${Date.now()}`,
     creationInfo: {
-      created: report.generatedAt,
+      created: toUtcZ(report.generatedAt),
       creators: [`Tool: codegov-${VERSION}`],
     },
     documentDescribes: ["SPDXRef-Package"],
@@ -122,7 +122,9 @@ export function exportSbom(report: AuditReport): string {
           annotationType: "REVIEW",
           annotator: `Tool: ${r.agentId}${r.modelVersion ? ` (${r.modelVersion})` : ""}`,
           annotationDate: toUtcZ(r.timestamp),
-          annotationComment: [
+          // SPDX 2.3 JSON names this field "comment" (not "annotationComment");
+          // the official validator drops the value otherwise and fails on null.
+          comment: [
             `Commit: ${r.commitHash}`,
             `Confidence: ${(r.confidence * 100).toFixed(0)}%`,
             `Review: ${r.reviewStatus}`,
@@ -323,9 +325,13 @@ function csvEscape(value: string): string {
   return value;
 }
 
-// SPDX requires UTC timestamps ending in "Z". Commit dates (%aI) carry a local
-// offset, so normalize them before emitting into the SBOM.
+// SPDX 2.3 dates must be UTC in the form "YYYY-MM-DDThh:mm:ssZ" — ending in "Z"
+// with NO fractional seconds. Commit dates (%aI) carry a local offset, and
+// toISOString() appends milliseconds (".650Z"); the official validator
+// (pyspdxtools) rejects both. Normalize the zone and strip the milliseconds.
 function toUtcZ(ts: string): string {
   const d = new Date(ts);
-  return isNaN(d.getTime()) ? new Date(0).toISOString() : d.toISOString();
+  return (isNaN(d.getTime()) ? new Date(0) : d)
+    .toISOString()
+    .replace(/\.\d{3}Z$/, "Z");
 }
