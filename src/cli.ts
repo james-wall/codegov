@@ -4,6 +4,7 @@ import { writeFileSync, unlinkSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { installHooks } from "./git/hooks.js";
 import { scanHistory, forensics, computeStats } from "./scan/index.js";
+import { computeSignals, formatSignalsReport } from "./signals/index.js";
 import { queryRecords, readRecords, ensureStoreExists } from "./scan/store.js";
 import { getCommitDetail } from "./git/parser.js";
 import { detectAgent, isBrandedAgent } from "./detect/engine.js";
@@ -152,6 +153,24 @@ program
         console.log(`  ${month}: ${data.ai}/${data.total} AI commits (${pct}%)`);
       }
     }
+  });
+
+program
+  .command("signals")
+  .description(
+    "EXPERIMENTAL: surface untrailered commits with AI-typical structure (heuristic leads, never counted in your AI %)"
+  )
+  .option("--since <duration>", "Time period to analyze (e.g., 90d, 6m)")
+  .option("--path <path>", "Limit to a specific path")
+  .option("--limit <n>", "Max candidate commits to list", "20")
+  .action((opts: { since?: string; path?: string; limit?: string }) => {
+    requireGitRepo();
+    const report = computeSignals({
+      since: opts.since,
+      path: opts.path,
+      limit: parseInt(opts.limit ?? "20", 10),
+    });
+    console.log(formatSignalsReport(report));
   });
 
 program

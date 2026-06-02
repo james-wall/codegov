@@ -440,7 +440,7 @@
                     </div>
                     <div class="card">
                         <h3>Attribute</h3>
-                        <p>Identifies 5 major AI tools: Claude Code, Cursor, GitHub Copilot, Devin, and Aider with high precision.</p>
+                        <p>Identifies a dozen AI tools — Claude Code, Cursor, Copilot, Devin, Aider, Codex, Gemini CLI, Jules, OpenHands, Sweep, JetBrains Junie, and Augment — with high precision.</p>
                     </div>
                     <div class="card">
                         <h3>Export</h3>
@@ -477,14 +477,43 @@
                         </tr>
                         <tr>
                             <td><span class="agent-badge devin">Devin</span></td>
-                            <td><span class="signal">devin-ai-integration[bot]</span> author email, <span class="signal">Devin AI</span> author name</td>
+                            <td><span class="signal">devin-ai-integration[bot]</span> author, <span class="signal">bot@devin.ai</span> author email</td>
                         </tr>
                         <tr>
                             <td><span class="agent-badge aider">Aider</span></td>
-                            <td><span class="signal">aider (model) &lt;aider@aider.chat&gt;</span> co-author, <span class="signal">aider:</span> message prefix</td>
+                            <td><span class="signal">aider (model) &lt;aider@aider.chat&gt;</span> / <span class="signal">&lt;noreply@aider.chat&gt;</span> co-author</td>
+                        </tr>
+                        <tr>
+                            <td><span class="agent-badge">OpenAI Codex</span></td>
+                            <td><span class="signal">Codex &lt;noreply@openai.com&gt;</span> co-author, <span class="signal">codex[bot]</span> / <span class="signal">openai-codex[bot]</span> author</td>
+                        </tr>
+                        <tr>
+                            <td><span class="agent-badge">Gemini CLI</span></td>
+                            <td><span class="signal">gemini-cli@users.noreply.github.com</span> co-author</td>
+                        </tr>
+                        <tr>
+                            <td><span class="agent-badge">Google Jules</span></td>
+                            <td><span class="signal">google-labs-jules[bot]</span> author</td>
+                        </tr>
+                        <tr>
+                            <td><span class="agent-badge">OpenHands</span></td>
+                            <td><span class="signal">openhands-agent</span> author, <span class="signal">openhands@all-hands.dev</span> co-author</td>
+                        </tr>
+                        <tr>
+                            <td><span class="agent-badge">Sweep</span></td>
+                            <td><span class="signal">sweep-ai-deprecated[bot]</span> / <span class="signal">sweep-nightly[bot]</span> author</td>
+                        </tr>
+                        <tr>
+                            <td><span class="agent-badge">JetBrains Junie</span></td>
+                            <td><span class="signal">jetbrains-junie[bot]</span> author</td>
+                        </tr>
+                        <tr>
+                            <td><span class="agent-badge">Augment</span></td>
+                            <td><span class="signal">augmentcode[bot]</span> author</td>
                         </tr>
                     </tbody>
                 </table>
+                <p style="color: #8b949e; margin-top: 16px; font-size: 14px;">Every signature is verified against real commits. Review-only bots that comment on PRs but never author commits (Amazon Q, gemini-code-assist, Cody) are deliberately excluded, and editor tools that commit under your own identity with no trailer (Windsurf, Continue, Cline, Zed, Tabnine) are unattributable from metadata — CodeGov counts only what it can verify.</p>
             </div>
         </section>
 

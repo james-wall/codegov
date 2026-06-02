@@ -1,14 +1,32 @@
 import { AgentId } from "../types.js";
 
-// The five tools we detect from specific, documented metadata signatures.
+// The tools we detect from specific, documented metadata signatures (bot logins,
+// dedicated co-author emails, author identities) — each verified against real
+// commits on GitHub, so false-positive risk is negligible.
 // "unknown-ai" (generic co-author/body hints) is deliberately NOT in this set:
 // it is low-signal and excluded from headline counts unless explicitly opted in.
+//
+// Deliberately EXCLUDED (verified type:Bot but review-only — they comment on PRs,
+// they do not author commits, so they never appear as a commit author):
+//   chatgpt-codex-connector[bot], gemini-code-assist[bot], gemini-cli[bot],
+//   amazon-q-developer[bot], openhands-reviewer[bot], jetbrains-ai[bot],
+//   sourcegraph-cody[bot], cody[bot], replit[bot].
+// Editor tools that commit under the user's own identity with no trailer
+// (Windsurf/Codeium, Continue, Cline/Roo, Zed, Tabnine) are unattributable
+// from metadata by design and are intentionally not guessed at.
 export const BRANDED_AGENTS: AgentId[] = [
   "claude-code",
   "cursor",
   "copilot",
   "devin",
   "aider",
+  "codex",
+  "gemini",
+  "jules",
+  "openhands",
+  "sweep",
+  "jetbrains",
+  "augment",
 ];
 
 export function isBrandedAgent(id: AgentId): boolean {
@@ -45,6 +63,13 @@ export function detectAgent(commit: CommitInfo): DetectionResult {
     detectCopilot,
     detectDevin,
     detectAider,
+    detectCodex,
+    detectGemini,
+    detectJules,
+    detectOpenHands,
+    detectSweep,
+    detectJetBrains,
+    detectAugment,
     detectGenericAI,
   ];
 
@@ -224,6 +249,12 @@ function detectDevin(commit: CommitInfo): DetectorResult {
     confidence = 0.95;
   }
 
+  // Devin also commits directly as "Devin <bot@devin.ai>".
+  if (commit.email === "bot@devin.ai" || commit.email.includes("bot@devin.ai")) {
+    signals.push("devin-bot-email");
+    confidence = Math.max(confidence, 0.95);
+  }
+
   if (commit.author === "Devin AI") {
     signals.push("devin-author-name");
     confidence = Math.max(confidence, 0.95);
@@ -251,8 +282,10 @@ function detectAider(commit: CommitInfo): DetectorResult {
 
   const fullText = commit.trailers + "\n" + commit.body;
 
+  // Aider's co-author email moved from aider@aider.chat to noreply@aider.chat;
+  // accept both, with or without the "(model)" segment.
   const aiderMatch = fullText.match(
-    /Co-[Aa]uthored-[Bb]y:\s*aider\s*\(([^)]+)\)\s*<aider@aider\.chat>/i
+    /Co-[Aa]uthored-[Bb]y:\s*aider\s*\(([^)]+)\)\s*<(?:aider|noreply)@aider\.chat>/i
   );
   if (aiderMatch) {
     signals.push("aider-co-authored-trailer");
@@ -260,7 +293,10 @@ function detectAider(commit: CommitInfo): DetectorResult {
     modelVersion = aiderMatch[1].trim();
   }
 
-  if (!aiderMatch && fullText.includes("aider@aider.chat")) {
+  if (
+    !aiderMatch &&
+    (fullText.includes("aider@aider.chat") || fullText.includes("noreply@aider.chat"))
+  ) {
     signals.push("aider-email");
     confidence = Math.max(confidence, 0.85);
   }
@@ -277,6 +313,151 @@ function detectAider(commit: CommitInfo): DetectorResult {
     modelVersion,
     promptSummary: null,
     signals,
+  };
+}
+
+// ── Newer tools — verified bot logins / dedicated co-author emails ──────
+// Each signature below was confirmed against real commits on GitHub (the
+// account is type:Bot or a dedicated AI identity AND actually authors commits),
+// so all match at high confidence with negligible false-positive risk.
+
+function detectCodex(commit: CommitInfo): DetectorResult {
+  const signals: string[] = [];
+  let confidence = 0;
+
+  const fullText = commit.trailers + "\n" + commit.body;
+
+  // OpenAI Codex CLI default trailer: "Co-authored-by: Codex <noreply@openai.com>"
+  if (fullText.match(/Co-[Aa]uthored-[Bb]y:\s*Codex\s*<noreply@openai\.com>/i)) {
+    signals.push("codex-co-author-trailer");
+    confidence = 0.95;
+  }
+
+  // OpenAI Codex GitHub App accounts (codex[bot], openai-codex[bot]). The
+  // review-only chatgpt-codex-connector[bot] is intentionally NOT matched.
+  if (
+    commit.email.includes("codex[bot]") ||
+    commit.author === "codex[bot]" ||
+    commit.author === "openai-codex[bot]"
+  ) {
+    signals.push("codex-bot-author");
+    confidence = Math.max(confidence, 0.95);
+  }
+
+  return {
+    matched: signals.length > 0,
+    agentId: "codex",
+    confidence,
+    modelVersion: null,
+    promptSummary: null,
+    signals,
+  };
+}
+
+function detectGemini(commit: CommitInfo): DetectorResult {
+  const signals: string[] = [];
+  let confidence = 0;
+
+  const fullText = commit.trailers + "\n" + commit.body + "\n" + commit.email;
+
+  // gemini-cli co-author trailer, e.g. "<218195315+gemini-cli@users.noreply.github.com>"
+  if (fullText.includes("gemini-cli@users.noreply.github.com")) {
+    signals.push("gemini-cli-co-author");
+    confidence = 0.95;
+  }
+
+  return {
+    matched: signals.length > 0,
+    agentId: "gemini",
+    confidence,
+    modelVersion: null,
+    promptSummary: null,
+    signals,
+  };
+}
+
+function detectJules(commit: CommitInfo): DetectorResult {
+  const matched =
+    commit.author === "google-labs-jules[bot]" ||
+    commit.email.includes("google-labs-jules[bot]");
+  return {
+    matched,
+    agentId: "jules",
+    confidence: matched ? 0.95 : 0,
+    modelVersion: null,
+    promptSummary: null,
+    signals: matched ? ["jules-bot-author"] : [],
+  };
+}
+
+function detectOpenHands(commit: CommitInfo): DetectorResult {
+  const signals: string[] = [];
+  let confidence = 0;
+
+  const fullText = commit.trailers + "\n" + commit.body;
+
+  // OpenHands commits as the "openhands-agent" identity...
+  if (commit.author === "openhands-agent" || commit.email.includes("openhands-agent")) {
+    signals.push("openhands-agent-author");
+    confidence = 0.95;
+  }
+
+  // ...or attributes via a co-author trailer on the all-hands.dev domain.
+  if (fullText.match(/Co-[Aa]uthored-[Bb]y:[^\n]*openhands@all-hands\.dev/i)) {
+    signals.push("openhands-co-author");
+    confidence = Math.max(confidence, 0.9);
+  }
+
+  return {
+    matched: signals.length > 0,
+    agentId: "openhands",
+    confidence,
+    modelVersion: null,
+    promptSummary: null,
+    signals,
+  };
+}
+
+function detectSweep(commit: CommitInfo): DetectorResult {
+  const matched = ["sweep-ai-deprecated[bot]", "sweep-nightly[bot]"].some(
+    (login) => commit.author === login || commit.email.includes(login)
+  );
+  return {
+    matched,
+    agentId: "sweep",
+    confidence: matched ? 0.95 : 0,
+    modelVersion: null,
+    promptSummary: null,
+    signals: matched ? ["sweep-bot-author"] : [],
+  };
+}
+
+function detectJetBrains(commit: CommitInfo): DetectorResult {
+  // JetBrains Junie autonomous coding agent.
+  const matched =
+    commit.author === "jetbrains-junie[bot]" ||
+    commit.email.includes("jetbrains-junie[bot]");
+  return {
+    matched,
+    agentId: "jetbrains",
+    confidence: matched ? 0.95 : 0,
+    modelVersion: null,
+    promptSummary: null,
+    signals: matched ? ["jetbrains-junie-bot-author"] : [],
+  };
+}
+
+function detectAugment(commit: CommitInfo): DetectorResult {
+  const matched =
+    commit.author === "augmentcode[bot]" ||
+    commit.email.includes("augmentcode[bot]");
+  return {
+    matched,
+    agentId: "augment",
+    confidence: matched ? 0.95 : 0,
+    modelVersion: null,
+    promptSummary: null,
+    signals: matched ? ["augment-bot-author"] : [],
   };
 }
 

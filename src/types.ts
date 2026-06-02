@@ -4,6 +4,13 @@ export type AgentId =
   | "copilot"
   | "devin"
   | "aider"
+  | "codex"
+  | "gemini"
+  | "jules"
+  | "openhands"
+  | "sweep"
+  | "jetbrains"
+  | "augment"
   | "unknown-ai"
   | "human";
 
